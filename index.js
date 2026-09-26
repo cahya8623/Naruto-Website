@@ -2,16 +2,17 @@ const mainForm = document.getElementById("mainForm")
 const inputMain = document.getElementById("inputMain")
 const cards = document.querySelector(".cards")
 let isLoading = false;
-mainForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    if (isLoading) return;
+let page = 1
 
-    const input = e.target.elements.inputMain.value
-    cards.innerHTML = "";
-    console.log("input" + input)
+console.log(page)
+
+async function fetchData(query = "") {
+    if (isLoading) return;
     try {
         isLoading = true
-        let response = await fetch(`https://dattebayo-api.onrender.com/characters?name=${input}`)
+        let url = query === "" ? `https://dattebayo-api.onrender.com/characters?page=${page}`
+            : `https://dattebayo-api.onrender.com/characters?name=${query}`
+        let response = await fetch(url)
 
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
@@ -26,9 +27,18 @@ mainForm.addEventListener("submit", async (e) => {
         console.error(error)
     } finally {
         isLoading = false
+
     }
 
-  
+}
+mainForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+
+    const input = inputMain.value
+    fetchData(input)
+
+
 })
 
 function renderUi(data) {
@@ -38,12 +48,10 @@ function renderUi(data) {
         const name = document.createElement("p")
         const clan = document.createElement("p")
         const img = document.createElement("img")
-        // console.log(data.images[0])
         name.textContent = `${data.name} `
         clan.textContent = ` ${data.personal.clan ? data.personal.clan : "No Clan"} `;
         img.src = data.images[0] ? `${data.images[0]}` : `asset/main.svg`
 
-        console.log(data)
         card.classList.add("card")
         card.appendChild(img)
         card.appendChild(name)
@@ -52,3 +60,10 @@ function renderUi(data) {
     })
 
 }
+window.addEventListener("scroll", () => {
+    if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight) {
+        page++
+        fetchData()
+    }
+})
+fetchData()
